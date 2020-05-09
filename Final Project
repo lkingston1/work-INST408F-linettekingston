@@ -1,0 +1,97 @@
+# Introduction
+
+Here we aim to study: Does whether someone has gotten a flu shot/spray in the past year depend on their residence in an urban or rural county, race, or the number of times they’ve visited a health professional in the past year?
+
+# Data Cleaning
+
+Independent Variable(s)
+
+  DRVISITS (continuous)
+  x.urbstat (categorical)
+  x.race (categorical)
+  
+Dependent Variable
+  FLUSHOT6 (binary categorical)
+
+```{r}
+
+# get and set working directory
+getwd()
+setwd("/Volumes/Samsung USB/Health Data Analytics/Final Project")
+
+# load packages
+library(Hmisc)
+library(dplyr)
+
+# load BRFSS dataset
+BRFSS <- sasxport.get("LLCP2018.xpt")
+
+# recode 88 (represents someone having visited a health professional 0 times) to 0 and 77 ("don't know/not sure") to NA
+BRFSS <- mutate(BRFSS, drvisits = ifelse(drvisits == 88, 0, 
+                                         ifelse(drvisits == 77, NA, drvisits)))
+#check drvisits recode
+summary(BRFSS$drvisits == 88 & BRFSS$drvisits == 77)
+
+# recode 9 (represents "don't know/not sure/refused") and 6 ("other race only, Non-Hispanic") to NA
+BRFSS <- mutate(BRFSS, x.race = ifelse(x.race == 9, NA, 
+                                       ifelse(x.race == 6, NA, x.race)))
+#check x.race recode
+table(BRFSS$x.race)
+
+# recode 2 (represents not getting the flu shot/spray) to 0; 9 ("refused") and 7 ("Don't know/not sure") to NA
+BRFSS <- mutate(BRFSS, flushot6 = ifelse(flushot6 == 7, NA, 
+                                         ifelse(flushot6 == 9, NA,
+                                         ifelse(flushot6 == 2, 0, flushot6))))
+#check flushot6 recode
+summary(BRFSS$flushot6 == 2 & BRFSS$flushot6 == 7 & BRFSS$flushot6 == 9)
+```
+
+# Logistic Regression
+
+```{r}
+
+# conduct logistic regression
+REGRESS <- glm(flushot6 ~ drvisits + factor(x.urbstat)+ factor(x.race), data = BRFSS, family = "binomial")
+
+# view regression results
+summary(REGRESS)
+```
+
+# Results
+
+### Interpreting Slope Coefficients
+
+A 1 unit increase in the number of times an individual has visited a health professional in the past year causes the log odds of one having received a flu shot/spray in the past year to increase by 0.016753, holding the other independent variables constant. 
+
+The log odds of having gotten a flu shot/spray in the past year between those who live in a rural county and those who live in an urban county is 0.062636, holding the other independent variables constant.
+
+The log odds of having gotten a flu shot/spray in the past year between those who are Black only, Non-Hispanic and those who are White only, Non-Hispanic is -0.435257, holding the other independent variables constant.
+
+The log odds of having gotten a flu shot/spray in the past year between those who are American Indian or Alaskan Native only, Non-Hispanic and those who are White only, Non-Hispanic is -0.198222, holding the other independent variables constant.
+
+The log odds of having gotten a flu shot/spray in the past year in the past year between those who are Asian only, Non-Hispanic and those who are White only, Non-Hispanic is  -0.130982, holding the other independent variables constant.
+
+The log odds of having gotten a flu shot/spray in the past year between those who are Native Hawaiian or other Pacific only only, Non-Hispanic and those who are White only, Non-Hispanic is -0.712910, holding the other independent variables constant.
+
+The log odds of having gotten a flu shot/spray in the past year between those who are multiracial, Non-Hispanic and those who are White only, Non-Hispanic is -0.673452, holding the other independent variables constant.
+
+The log odds of having gotten a flu shot/spray in the past year between those who are Hispanic and those who are White only, Non-Hispanic is -0.412961, holding the other independent variables constant.
+
+
+### Interpreting P-values
+
+Since the p-value for "the number of times an individual has visited a health professional in the past year" (2e-16) is less than alpha, 0.05, we can conclude that the number of times an individual has visited a health professional in the past year is associated with whether or not an individual got a flu shot or spray in the past year.
+
+Since the p-value for "rural counties" (0.00989) is less than alpha, 0.05, we can conclude that residence in a rural county is associated with whether or not an individual got a flu shot or spray in the past year.
+
+Since the p-value for "Black only, Non-Hispanic" (<2e-16) is less than alpha, 0.05, we can conclude that whether someone is Black, non-Hispanic is associated with whether or not they got a flu shot or spray in the past year.
+
+Since the p-value for "American Indian or Alaskan Native only, Non-Hispanic" (0.00296) is less than alpha, 0.05, we can conclude that whether someone is Black, non-Hispanic is associated with whether or not they got a flu shot or spray in the past year.
+
+Since the p-value for "Asian only, Non-Hispanic" (0.20160) is less than alpha, 0.05, we can conclude that whether someone is Black, non-Hispanic is not associated with whether or not they got a flu shot or spray in the past year.
+
+Since the p-value for "Native Hawaiian or other Pacific Islander only, Non-Hispanic" (0.01613) is less than alpha, 0.05, we can conclude that whether someone is Black, non-Hispanic is associated with whether or not they got a flu shot or spray in the past year.
+
+Since the p-value for "Multiracial, Non-Hispanic" (3.38e-15) is less than alpha, 0.05, we can conclude that whether someone is Black, non-Hispanic is associated with whether or not they got a flu shot or spray in the past year.
+
+Since the p-value for "Hispanic" (<2e-16) is less than alpha, 0.05, we can conclude that whether someone is Black, non-Hispanic is associated with whether or not they got a flu shot or spray in the past year.
